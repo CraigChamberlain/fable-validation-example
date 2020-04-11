@@ -41,13 +41,13 @@ module.exports = (env, options) => {
             {
                 demo: [
                     "@babel/polyfill",
-                    './src/fable_validation_example.fsproj',
+                    './src/FableValidationExample.fsproj',
                     './src/scss/main.scss'
                 ]
             } : {
                 app: [
                     "@babel/polyfill",
-                    './src/fable_validation_example.fsproj'
+                    './src/FableValidationExample.fsproj'
                 ],
                 style: [
                     './src/scss/main.scss'
