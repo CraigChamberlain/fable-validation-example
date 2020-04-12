@@ -20,6 +20,7 @@ type Model =
       Email : string
       Password : string
       ValidationErrors : Map<string, string List>
+      ModalState: bool
 }
 
 type Msg =
@@ -28,8 +29,9 @@ type Msg =
     | UpdateValidationErrors
     | Submit
     | Clear
+    | ToggleModal
 
-let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty}, Cmd.ofMsg UpdateValidationErrors
+let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty; ModalState = false}, Cmd.ofMsg UpdateValidationErrors
 
 let validateModel model =
       fast <| fun t ->
@@ -65,9 +67,11 @@ let private update msg model =
         | Error result ->
           { model with ValidationErrors = result}, Cmd.none
     | Submit ->
-        model, Cmd.none
+        { model with ModalState = not model.ModalState }, Cmd.none
     | Clear ->
         init()
+    | ToggleModal ->
+        { model with ModalState = not model.ModalState }, Cmd.none
 
 // Exceptions are burried inside the view and so this should empty map should be guarded against.
 let guardEmptyMap key unsafeMap =
@@ -142,6 +146,21 @@ let private passwordInput model dispatch =
                   Help.help  [ Help.Color IsDanger ] [errorListHtml]
             ]
 
+
+// Render the modal
+let basicModal  model dispatch =
+    Modal.modal [ Modal.IsActive model.ModalState ]
+        [ Modal.background [ Props [ OnClick (fun _ -> dispatch ToggleModal) ] ] [ ]
+          Modal.content [ ]
+            [ Box.box' [ ]
+                [
+                  Heading.h2 [] [str "Email:"]
+                  str model.Email
+                  Heading.h2 [] [str "Password:"]
+                  str model.Password  ] ]
+          Modal.close [ Modal.Close.Size IsLarge
+                        Modal.Close.OnClick (fun _ -> dispatch ToggleModal) ] [ ] ]
+
 let private view model dispatch =
     Hero.hero [ Hero.IsFullHeight ]
         [ Hero.body [ ]
@@ -169,6 +188,8 @@ let private view model dispatch =
                                             ]
                                           [ str "Submit" ]
                                        ]
+                                    div [ ]
+                                      [ basicModal model dispatch ]
                                     Control.div [ ]
                                       [ Button.button [
                                           Button.IsLink
