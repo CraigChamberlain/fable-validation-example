@@ -26,25 +26,26 @@ type Msg =
     | ChangeEmail of string
     | ChangePassword of string
     | UpdateValidationErrors
+    | Submit
+    | Clear
 
-let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty}, Cmd.none
+let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty}, Cmd.ofMsg UpdateValidationErrors
 
 let validateModel model =
       fast <| fun t ->
-        { password =  t.Test ValidModel.Password model.Password // call `t.Test fieldName value` to initialize field state
+        {
+          email =     t.Test ValidModel.Email model.Email
+                      |> t.Trim
+                      |> t.IsMail "Should be a valid email"
+                      |> t.End
+
+          password =  t.Test ValidModel.Password model.Password // call `t.Test fieldName value` to initialize field state
                       |> t.Trim // pipe the field state to rules
                       |> t.IsValid (Seq.head >> System.Char.IsUpper) "A Password should start with a captial" // custom validation
                       |> t.Match (System.Text.RegularExpressions.Regex(".[a-z]")) "A should have some lowercase charactors" // regex validation
                       |> t.NotBlank "Password cannot be blank" // rules can contain params and a generic error message
                       |> t.MaxLen 20 "Max lenght is {len}"
                       |> t.MinLen 8 "Min length is {len}"
-                      |> t.End // call `t.End` to unwrap the validated
-                               // and transformed value,
-                               // you can use the transformed values to create a new model
-
-          email =     t.Test ValidModel.Email model.Email // call `t.Test fieldName value` to initialize field state
-                      |> t.Trim // pipe the field state to rules
-                      |> t.IsMail "Should be a valid email"
                       |> t.End // call `t.End` to unwrap the validated
                                // and transformed value,
                                // you can use the transformed values to create a new model
@@ -59,10 +60,14 @@ let private update msg model =
     | UpdateValidationErrors ->
         let result = validateModel model
         match result with
-        | Ok validModel ->
+        | Ok _ ->
           { model with ValidationErrors = Map.empty }, Cmd.none
         | Error result ->
           { model with ValidationErrors = result}, Cmd.none
+    | Submit ->
+        model, Cmd.none
+    | Clear ->
+        init()
 
 // Exceptions are burried inside the view and so this should empty map should be guarded against.
 let guardEmptyMap key unsafeMap =
@@ -80,10 +85,11 @@ let private emailInput model dispatch =
               Control.div [ Control.HasIconLeft
                             Control.HasIconRight ]
                 [ Input.email [ Input.OnChange (fun ev -> dispatch (ChangeEmail ev.Value))
+                                Input.Value model.Email
                                 match errors with
                                 | [] -> Input.Color IsSuccess
                                 | _ -> Input.Color IsDanger
-                                Input.DefaultValue "hello@" ]
+                               ]
                   Icon.icon [ Icon.Size IsSmall; Icon.IsLeft ]
                     [ Fa.i [ Fa.Solid.Envelope ]
                         [ ] ]
@@ -146,9 +152,35 @@ let private view model dispatch =
                         [ Image.image [ Image.Is128x128
                                         Image.Props [ Style [ Margin "auto"] ] ]
                             [ img [ Src "assets/fulma_logo.svg" ] ]
-                          emailInput model dispatch
-                          passwordInput model dispatch
-                        ] ] ] ] ]
+                          form [ ]
+                              [ emailInput model dispatch
+                                passwordInput model dispatch
+                                // Control area (submit, cancel, etc.)
+                                Field.div [ Field.IsGrouped ]
+                                  [ Control.div [ ]
+                                      [ Button.button
+                                          [
+                                            Button.Color IsPrimary
+                                            Button.Props
+                                              [ Type "button"
+                                                OnClick (fun _ -> dispatch Submit)
+                                                Disabled <| not (Map.isEmpty model.ValidationErrors)
+                                              ]
+                                            ]
+                                          [ str "Submit" ]
+                                       ]
+                                    Control.div [ ]
+                                      [ Button.button [
+                                          Button.IsLink
+                                          Button.Props
+                                              [ Type "button"
+                                                OnClick (fun _ -> dispatch Clear)
+                                              ]
+                                          ]
+                                          [ str "Clear" ] ] ]
+
+
+        ] ] ] ] ] ]
 
 open Elmish.Debug
 open Elmish.HMR
