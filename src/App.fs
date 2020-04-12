@@ -7,74 +7,131 @@ open Fulma
 open Fable.FontAwesome
 open Fable.Validation.Core
 
+
+type ValidModel = {
+        email : string
+        password : string
+      } with
+      static member Email = "Email"
+      static member Password = "Password"
+
 type Model =
-    { 
-      Value : string 
-      ValueValidationErrors : string List
-    }
+    {
+      Email : string
+      Password : string
+      ValidationErrors : Map<string, string List>
+}
 
 type Msg =
-    | ChangeValue of string
+    | ChangeEmail of string
+    | ChangePassword of string
     | UpdateValidationErrors
 
-let init _ = { Value = "" ; ValueValidationErrors = []}, Cmd.none
+let init _ = { Email = ""; Password = "" ; ValidationErrors = Map.empty}, Cmd.none
 
-let validateValue value = 
-      all <| fun t ->
-          t.Test "Value" value // call `t.Test fieldName value` to initialize field state
-                |> t.Trim // pipe the field state to rules
-                |> t.IsValid (Seq.head >> System.Char.IsUpper) "A name should start with a captial" // custom validation
-                |> t.Match (System.Text.RegularExpressions.Regex(".[a-z]")) "A should have some lowercase charactors" // regex validation
-                |> t.NotBlank "name cannot be blank" // rules can contain params and a generic error message
-                |> t.MaxLen 20 "maxlen is {len}"
-                |> t.MinLen 3 "minlen is {len}"
-                |> t.End // call `t.End` to unwrap the validated
-                         // and transformed value,
-                         // you can use the transformed values to create a new model
+let validateModel model =
+      fast <| fun t ->
+        { password =  t.Test ValidModel.Password model.Password // call `t.Test fieldName value` to initialize field state
+                      |> t.Trim // pipe the field state to rules
+                      |> t.IsValid (Seq.head >> System.Char.IsUpper) "A Password should start with a captial" // custom validation
+                      |> t.Match (System.Text.RegularExpressions.Regex(".[a-z]")) "A should have some lowercase charactors" // regex validation
+                      |> t.NotBlank "Password cannot be blank" // rules can contain params and a generic error message
+                      |> t.MaxLen 20 "Max lenght is {len}"
+                      |> t.MinLen 8 "Min length is {len}"
+                      |> t.End // call `t.End` to unwrap the validated
+                               // and transformed value,
+                               // you can use the transformed values to create a new model
 
+          email =     t.Test ValidModel.Email model.Email // call `t.Test fieldName value` to initialize field state
+                      |> t.Trim // pipe the field state to rules
+                      |> t.IsMail "Should be a valid email"
+                      |> t.End // call `t.End` to unwrap the validated
+                               // and transformed value,
+                               // you can use the transformed values to create a new model
+        }
 
 let private update msg model =
     match msg with
-    | ChangeValue newValue ->
-        { model with Value = newValue }, Cmd.ofMsg UpdateValidationErrors
-    | UpdateValidationErrors -> 
-        let result = validateValue model.Value
-        match result with 
-        | Ok _ -> 
-          { model with ValueValidationErrors = [] }, Cmd.none
-        | Error (result:Map<string,string list>) ->  
-          { model with ValueValidationErrors = result.["Value"] }, Cmd.none
+    | ChangePassword newPassword ->
+        { model with Password = newPassword }, Cmd.ofMsg UpdateValidationErrors
+    | ChangeEmail newEmail ->
+        { model with Email = newEmail }, Cmd.ofMsg UpdateValidationErrors
+    | UpdateValidationErrors ->
+        let result = validateModel model
+        match result with
+        | Ok validModel ->
+          { model with ValidationErrors = Map.empty }, Cmd.none
+        | Error result ->
+          { model with ValidationErrors = result}, Cmd.none
 
+// Exceptions are burried inside the view and so this should empty map should be guarded against.
+let guardEmptyMap key unsafeMap =
+    if Map.isEmpty unsafeMap || not (Map.containsKey key unsafeMap)
+    then []
+    else unsafeMap.[key]
 
-let private nameInput model dispatch=
+let private emailInput model dispatch =
 
-       Field.div [ ]
+  let errors = guardEmptyMap ValidModel.Email model.ValidationErrors
+
+  Field.div [ ]
             [ Label.label [ ]
-                [ str "Username" ]
+                [ str ValidModel.Email ]
               Control.div [ Control.HasIconLeft
                             Control.HasIconRight ]
-                [ Input.text [ Input.OnChange (fun ev -> dispatch (ChangeValue ev.Value))
-                               Input.Value model.Value
-                               Input.Props [ AutoFocus true ]
-                               match model.ValueValidationErrors with
-                               | [] -> Input.Color IsSuccess
-                               | _ -> Input.Color IsDanger
-                              ]
+                [ Input.email [ Input.OnChange (fun ev -> dispatch (ChangeEmail ev.Value))
+                                match errors with
+                                | [] -> Input.Color IsSuccess
+                                | _ -> Input.Color IsDanger
+                                Input.DefaultValue "hello@" ]
+                  Icon.icon [ Icon.Size IsSmall; Icon.IsLeft ]
+                    [ Fa.i [ Fa.Solid.Envelope ]
+                        [ ] ]
+                  Icon.icon [ Icon.Size IsSmall; Icon.IsRight ]
+                    [ Fa.i [ match errors with
+                               | [] -> Fa.Solid.Check
+                               | _ -> Fa.Solid.ExclamationTriangle ]
+                        [ ] ] ]
+              match errors with
+              | [] ->
+                  Help.help  [ Help.Color IsSuccess ] [ str "This Email is valid" ]
+              | errorList ->
+                  let errorListHtml = ul [] (errorList |> List.map (fun e -> li [ ] [ str e ]) )
+                  Help.help  [ Help.Color IsDanger ] [errorListHtml]
+            ]
+
+let private passwordInput model dispatch =
+       let errors = guardEmptyMap ValidModel.Password model.ValidationErrors
+       Field.div [ ]
+            [ Label.label [ ]
+                [ str ValidModel.Password ]
+              Control.div [ Control.HasIconLeft
+                            Control.HasIconRight ]
+                [ Input.password
+                          [
+                             Input.OnChange (fun ev -> dispatch (ChangePassword ev.Value))
+                             Input.Value model.Password
+                             Input.Props [ AutoFocus true ]
+                             match errors with
+                             | [] -> Input.Color IsSuccess
+                             | _ -> Input.Color IsDanger
+                          ]
                   Icon.icon [ Icon.Size IsSmall; Icon.IsLeft ]
                     [ Fa.i [ Fa.Solid.User ]
                         [ ] ]
                   Icon.icon [ Icon.Size IsSmall; Icon.IsRight ]
-                    [ Fa.i [ 
-                              match model.ValueValidationErrors with
+                    [ Fa.i [
+                              match errors with
                                | [] -> Fa.Solid.Check
                                | _ -> Fa.Solid.ExclamationTriangle
                          ]
                         [ ] ] ]
-              
-              match model.ValueValidationErrors with
-              | [] -> 
-                  Help.help  [ Help.Color IsSuccess ] [ str "This username is valid" ] 
-              | errorList -> 
+
+
+              match errors with
+              | [] ->
+                  Help.help  [ Help.Color IsSuccess ] [ str "This Password is valid" ]
+              | errorList ->
                   let errorListHtml = ul [] (errorList |> List.map (fun e -> li [ ] [ str e ]) )
                   Help.help  [ Help.Color IsDanger ] [errorListHtml]
             ]
@@ -89,14 +146,9 @@ let private view model dispatch =
                         [ Image.image [ Image.Is128x128
                                         Image.Props [ Style [ Margin "auto"] ] ]
                             [ img [ Src "assets/fulma_logo.svg" ] ]
-                          nameInput model dispatch                  
-                          Content.content [ ]
-                            [ str "Hello, "
-                              str model.Value
-                              str " "
-                              Icon.icon [ ]
-                                [ Fa.i [ Fa.Regular.Smile ]
-                                    [ ] ] ] ] ] ] ] ]
+                          emailInput model dispatch
+                          passwordInput model dispatch
+                        ] ] ] ] ]
 
 open Elmish.Debug
 open Elmish.HMR
