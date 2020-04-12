@@ -10,3 +10,5 @@ bin/
 output/
 .fake/
 temp/
+
+.ionide
