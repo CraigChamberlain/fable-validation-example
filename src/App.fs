@@ -23,9 +23,11 @@ let validateValue value =
       all <| fun t ->
           t.Test "Value" value // call `t.Test fieldName value` to initialize field state
                 |> t.Trim // pipe the field state to rules
+                |> t.IsValid (Seq.head >> System.Char.IsUpper) "A name should start with a captial" // custom validation
+                |> t.Match (System.Text.RegularExpressions.Regex(".[a-z]")) "A should have some lowercase charactors" // regex validation
                 |> t.NotBlank "name cannot be blank" // rules can contain params and a generic error message
                 |> t.MaxLen 20 "maxlen is {len}"
-                |> t.MinLen 4 "minlen is {len}"
+                |> t.MinLen 3 "minlen is {len}"
                 |> t.End // call `t.End` to unwrap the validated
                          // and transformed value,
                          // you can use the transformed values to create a new model
@@ -43,6 +45,40 @@ let private update msg model =
         | Error (result:Map<string,string list>) ->  
           { model with ValueValidationErrors = result.["Value"] }, Cmd.none
 
+
+let private nameInput model dispatch=
+
+       Field.div [ ]
+            [ Label.label [ ]
+                [ str "Username" ]
+              Control.div [ Control.HasIconLeft
+                            Control.HasIconRight ]
+                [ Input.text [ Input.OnChange (fun ev -> dispatch (ChangeValue ev.Value))
+                               Input.Value model.Value
+                               Input.Props [ AutoFocus true ]
+                               match model.ValueValidationErrors with
+                               | [] -> Input.Color IsSuccess
+                               | _ -> Input.Color IsDanger
+                              ]
+                  Icon.icon [ Icon.Size IsSmall; Icon.IsLeft ]
+                    [ Fa.i [ Fa.Solid.User ]
+                        [ ] ]
+                  Icon.icon [ Icon.Size IsSmall; Icon.IsRight ]
+                    [ Fa.i [ 
+                              match model.ValueValidationErrors with
+                               | [] -> Fa.Solid.Check
+                               | _ -> Fa.Solid.ExclamationTriangle
+                         ]
+                        [ ] ] ]
+              
+              match model.ValueValidationErrors with
+              | [] -> 
+                  Help.help  [ Help.Color IsSuccess ] [ str "This username is valid" ] 
+              | errorList -> 
+                  let errorListHtml = ul [] (errorList |> List.map (fun e -> li [ ] [ str e ]) )
+                  Help.help  [ Help.Color IsDanger ] [errorListHtml]
+            ]
+
 let private view model dispatch =
     Hero.hero [ Hero.IsFullHeight ]
         [ Hero.body [ ]
@@ -53,20 +89,7 @@ let private view model dispatch =
                         [ Image.image [ Image.Is128x128
                                         Image.Props [ Style [ Margin "auto"] ] ]
                             [ img [ Src "assets/fulma_logo.svg" ] ]
-                          Field.div [ ]
-                            [ Label.label [ ]
-                                [ str "Enter your name" ]
-                              Control.div [ ]
-                                [ Input.text [ Input.OnChange (fun ev -> dispatch (ChangeValue ev.Value))
-                                               Input.Value model.Value
-                                               Input.Props [ AutoFocus true ] ] ] ]
-                          Content.content [ ]
-                            [ str "Errors: "
-                              model.ValueValidationErrors |> String.concat ", " |> str
-                              str " "
-                              Icon.icon [ ]
-                                [ Fa.i [ Fa.Regular.Smile ]
-                                    [ ] ] ]                        
+                          nameInput model dispatch                  
                           Content.content [ ]
                             [ str "Hello, "
                               str model.Value
