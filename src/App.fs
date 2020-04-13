@@ -73,6 +73,25 @@ let private update msg model =
     | ToggleModal ->
         { model with ModalState = not model.ModalState }, Cmd.none
 
+let navBar =
+    Navbar.navbar []
+            [  Navbar.End.div [ ]
+
+                    [ Control.div [ ]
+                        [ Button.a [ Button.Props [ Href "https://github.com/CraigChamberlain/fable-validation-example" ] ]
+                            [ Icon.icon [ ] [ Fa.i [ Fa.Brand.Github ] [] ]
+                              span [] [ str "Github" ]
+                            ]
+                         ]
+
+                      Control.div [ ]
+                        [ Button.a [ Button.Props [ Href "https://www.gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example" ] ]
+                              [Image.image [ Image.Props [ Alt "Gitpod" ]]
+                                   [ img [ Src "https://gitpod.io/button/open-in-gitpod.svg" ]  ]
+
+                      ]]]]
+
+
 // Exceptions are burried inside the view and so this should empty map should be guarded against.
 let guardEmptyMap key unsafeMap =
     if Map.isEmpty unsafeMap || not (Map.containsKey key unsafeMap)
@@ -162,6 +181,8 @@ let basicModal  model dispatch =
                         Modal.Close.OnClick (fun _ -> dispatch ToggleModal) ] [ ] ]
 
 let private view model dispatch =
+  div [] [
+    navBar
     Hero.hero [ Hero.IsFullHeight ]
         [ Hero.body [ ]
             [ Container.container [ ]
@@ -203,7 +224,7 @@ let private view model dispatch =
                           div [ ]
                              [ basicModal model dispatch ]
 
-        ] ] ] ] ]
+        ] ] ] ] ] ]
 
 open Elmish.Debug
 open Elmish.HMR
