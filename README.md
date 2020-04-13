@@ -1,14 +1,14 @@
 # Fable.Validation Example
 
-[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://github.com/CraigChamberlain/fable-validation-example)
+[![Open in Gitpod](https://gitpod.io/button/open-in-gitpod.svg)](https://gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example)
 
-The [Fable.Validation](https://github.com/zaaack/fable-validation) 
-paket is used in this example to demonstrate a form validation and 
+The [Fable.Validation](https://github.com/zaaack/fable-validation)
+paket is used in this example to demonstrate a form validation and
 styling in an Elmish workflow.
 
 In particular see the validate function in src/app.fs.
 
-It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation) 
+It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation)
 Which uses a previous version of Fable and other tools.
 
 This project is built upon the [Fulma Minimal Template](https://fulma.github.io/Fulma/#template)
