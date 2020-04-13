@@ -188,8 +188,6 @@ let private view model dispatch =
                                             ]
                                           [ str "Submit" ]
                                        ]
-                                    div [ ]
-                                      [ basicModal model dispatch ]
                                     Control.div [ ]
                                       [ Button.button [
                                           Button.IsLink
@@ -201,7 +199,11 @@ let private view model dispatch =
                                           [ str "Clear" ] ] ]
 
 
-        ] ] ] ] ] ]
+                          ]
+                          div [ ]
+                             [ basicModal model dispatch ]
+
+        ] ] ] ] ]
 
 open Elmish.Debug
 open Elmish.HMR
