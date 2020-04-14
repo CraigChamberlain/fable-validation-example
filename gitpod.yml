@@ -1,0 +1,13 @@
+image:
+  file: .docker/Dockerfile
+
+ports:
+  - port: 8080
+
+tasks:
+  - before: dotnet tool restore && dotnet paket restore
+    command: ./fake.sh build -t Watch
+
+vscode:
+  extensions:
+    - Ionide.Ionide-fsharp@4.5.0:0qxXuhq6eO066etkNQrKCQ==
