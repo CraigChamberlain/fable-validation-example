@@ -85,7 +85,7 @@ let navBar =
                          ]
 
                       Control.div [ ]
-                        [ Button.a [ Button.Props [ Href "https://www.gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example" ] ]
+                        [ a [ Href "https://www.gitpod.io/#https://github.com/CraigChamberlain/fable-validation-example"  ]
                               [Image.image [ Image.Props [ Alt "Gitpod" ]]
                                    [ img [ Src "https://gitpod.io/button/open-in-gitpod.svg" ]  ]
 

@@ -6,7 +6,7 @@ The [Fable.Validation](https://github.com/zaaack/fable-validation)
 paket is used in this example to demonstrate a form validation and
 styling in an Elmish workflow.
 
-In particular see the validate function in src/app.fs.
+In particular see the validateModel function in src/app.fs.
 
 It is modelled after [Zaid-Ajaj's](https://github.com/Zaid-Ajaj) [elmish-login-flow-validation](https://github.com/Zaid-Ajaj/elmish-login-flow-validation)
 Which uses a previous version of Fable and other tools.
